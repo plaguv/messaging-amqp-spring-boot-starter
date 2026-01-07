@@ -11,22 +11,15 @@
     <description>Messaging Starter designed for Spring Boots AMQP</description>
 
     <properties>
-        <spring-boot.version>4.0.1</spring-boot.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
     <dependencies>
-<!--        <dependency>-->
-<!--            <groupId>de.fhdw</groupId>-->
-<!--            <artifactId>messaging-amqp-contracts</artifactId>-->
-<!--            <version>1.0.0-SNAPSHOT</version>-->
-<!--        </dependency>-->
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>
-            <version>${spring-boot.version}</version>
+            <version>4.0.1</version>
         </dependency>
     </dependencies>
 
@@ -53,7 +46,7 @@
         <snapshotRepository>
             <id>github</id>
             <name>GitHub Packages Snapshots</name>
-            <url>https://maven.pkg.github.com/Plaguv/messaging-amqp-contracts</url>
+            <url>https://maven.pkg.github.com/Plaguv/messaging-amqp-starter</url>
         </snapshotRepository>
     </distributionManagement>
 </project>
