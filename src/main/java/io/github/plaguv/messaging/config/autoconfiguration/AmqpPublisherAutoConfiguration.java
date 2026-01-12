@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import tools.jackson.databind.ObjectMapper;
 
 @AutoConfiguration(after = AmqpAutoConfiguration.class)
 @EnableConfigurationProperties(AmqpProperties.class)
@@ -17,7 +18,7 @@ public class AmqpPublisherAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(EventPublisher.class)
-    public EventPublisher eventPublisher(RabbitTemplate rabbitTemplate, AmqpProperties amqpProperties) {
-        return new AmqpEventPublisher(rabbitTemplate, amqpProperties);
+    public EventPublisher eventPublisher(RabbitTemplate rabbitTemplate, AmqpProperties amqpProperties, ObjectMapper objectMapper) {
+        return new AmqpEventPublisher(rabbitTemplate, amqpProperties, objectMapper);
     }
 }

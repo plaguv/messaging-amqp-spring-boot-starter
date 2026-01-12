@@ -1,11 +1,10 @@
 package io.github.plaguv.messaging.listener;
 
+import io.github.plaguv.contracts.DomainEvent;
 import io.github.plaguv.messaging.config.properties.AmqpProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.stereotype.Component;
 
-@Component
-public class AmqpEventListener implements EventListener {
+public abstract class AmqpEventListener<T extends DomainEvent> implements EventListener<T> {
 
     private final RabbitTemplate rabbitTemplate;
     private final AmqpProperties amqpProperties;
@@ -16,5 +15,7 @@ public class AmqpEventListener implements EventListener {
     }
 
     @Override
-    public void handleMessage(Object message) {}
+    public void handleMessage(DomainEvent message) {
+
+    }
 }

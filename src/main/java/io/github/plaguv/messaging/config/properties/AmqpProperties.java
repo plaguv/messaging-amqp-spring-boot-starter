@@ -1,5 +1,6 @@
 package io.github.plaguv.messaging.config.properties;
 
+import io.github.plaguv.contracts.common.EventScope;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -42,19 +43,11 @@ public class AmqpProperties implements InitializingBean {
         }
     }
 
-    public String getInternalExchange() {
-        return internalExchange;
-    }
-
-    public void setInternalExchange(String internalExchange) {
-        this.internalExchange = internalExchange;
-    }
-
-    public String getExternalExchange() {
-        return externalExchange;
-    }
-
-    public void setExternalExchange(String externalExchange) {
-        this.externalExchange = externalExchange;
+    public String getExchange(EventScope exchangeType) {
+        return switch (exchangeType) {
+            case INTERNAL -> internalExchange;
+            case EXTERNAL -> externalExchange;
+            default -> throw new IllegalStateException("Unknown event scope " + exchangeType);
+        };
     }
 }
