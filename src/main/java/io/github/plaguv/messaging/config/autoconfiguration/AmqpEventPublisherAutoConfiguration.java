@@ -2,6 +2,10 @@ package io.github.plaguv.messaging.config.autoconfiguration;
 
 import io.github.plaguv.messaging.config.properties.AmqpProperties;
 import io.github.plaguv.messaging.publisher.*;
+import io.github.plaguv.messaging.utlity.AmqpEventRouter;
+import io.github.plaguv.messaging.utlity.AmqpTopologyDeclarer;
+import io.github.plaguv.messaging.utlity.EventRouter;
+import io.github.plaguv.messaging.utlity.TopologyDeclarer;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.boot.autoconfigure.AutoConfiguration;

@@ -1,78 +1,86 @@
 package io.github.plaguv.messaging.listener;
 
 import io.github.plaguv.contracts.common.EventEnvelope;
-import io.github.plaguv.contracts.common.EventInstance;
-import io.github.plaguv.messaging.publisher.EventRouter;
-import io.github.plaguv.messaging.publisher.TopologyDeclarer;
-import jakarta.annotation.Nonnull;
+import io.github.plaguv.contracts.common.routing.EventType;
+import io.github.plaguv.messaging.utlity.EventRouter;
+import io.github.plaguv.messaging.utlity.TopologyDeclarer;
+import org.jspecify.annotations.NonNull;
+import org.springframework.amqp.rabbit.annotation.RabbitListenerConfigurer;
 import org.springframework.amqp.rabbit.listener.MethodRabbitListenerEndpoint;
 import org.springframework.amqp.rabbit.listener.RabbitListenerContainerFactory;
-import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistry;
+import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistrar;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Method;
-import java.util.Map;
 
 @Component
-public class AmqpEventListenerRegistrar implements ApplicationContextAware, InitializingBean, EventListenerRegistrar {
+public class AmqpEventListenerRegistrar implements
+        EventListenerRegistrar,
+        RabbitListenerConfigurer,
+        ApplicationContextAware,
+        BeanPostProcessor {
 
-    private final RabbitListenerEndpointRegistry registry;
-    private final RabbitListenerContainerFactory<?> factory;
-    private final TopologyDeclarer topologyDeclarer;
     private final EventRouter eventRouter;
+    private final TopologyDeclarer topologyDeclarer;
 
     private ApplicationContext applicationContext;
+    private RabbitListenerEndpointRegistrar endpointRegistrar;
 
-    public AmqpEventListenerRegistrar(
-            RabbitListenerEndpointRegistry registry,
-            RabbitListenerContainerFactory<?> factory,
-            TopologyDeclarer topologyDeclarer,
-            EventRouter eventRouter
-    ) {
-        this.registry = registry;
-        this.factory = factory;
-        this.topologyDeclarer = topologyDeclarer;
+    public AmqpEventListenerRegistrar(EventRouter eventRouter, TopologyDeclarer topologyDeclarer) {
         this.eventRouter = eventRouter;
+        this.topologyDeclarer = topologyDeclarer;
     }
 
     @Override
-    public void setApplicationContext(@Nonnull ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
+    public void configureRabbitListeners(@NonNull RabbitListenerEndpointRegistrar registrar) {
+        this.endpointRegistrar = registrar;
     }
 
     @Override
-    public void afterPropertiesSet() throws Exception {
-        Map<String, EventListener> listeners = applicationContext.getBeansOfType(EventListener.class);
+    public Object postProcessAfterInitialization(Object bean, @NonNull String beanName)
+            throws BeansException {
 
-        for (EventListener<?> listener : listeners.values()) {
-            registerListener(listener);
+        for (Method method : bean.getClass().getDeclaredMethods()) {
+
+            AmqpListener listener = method.getAnnotation(AmqpListener.class);
+            if (listener == null) continue;
+
+            EventType event = listener.event();
+            registerListenerForEvent(bean, beanName, method, event);
         }
+        return bean;
     }
 
-    private <T extends EventInstance> void registerListener(EventListener<T> listener) {
+    private void registerListenerForEvent(Object bean, String beanName, Method method, EventType event) {
+        if (endpointRegistrar == null) {
+            throw new IllegalStateException("RabbitListenerEndpointRegistrar not initialized yet");
+        }
 
-        Class<T> eventType = listener.getEventType();
-        EventEnvelope mockEventEnvelope = new EventEnvelope(null, null, null);
-
-        String queueName = eventRouter.resolveQueue(mockEventEnvelope);
-
-        topologyDeclarer.declareExchangeIfAbsent(mockEventEnvelope);
-        topologyDeclarer.declareQueueIfAbsent(mockEventEnvelope);
-        topologyDeclarer.declareBindingIfAbsent(mockEventEnvelope);
-
-        Method method = ReflectionUtils.findMethod(listener.getClass(), "onEvent", eventType);
+        // TODO replace with actual envelope creation
+        EventEnvelope envelope = null;
+        String queueName = eventRouter.resolveQueue(envelope);
+        topologyDeclarer.declareAllIfAbsent(envelope);
 
         MethodRabbitListenerEndpoint endpoint = new MethodRabbitListenerEndpoint();
-        endpoint.setId(listener.getClass().getName() + "#" + eventType.getSimpleName());
-        endpoint.setBean(listener);
+        endpoint.setBean(bean);
         endpoint.setMethod(method);
         endpoint.setQueueNames(queueName);
+        endpoint.setId("%s#%s#%s".formatted(beanName, method.getName(), event.name()));
+        endpoint.setExclusive(false);
 
-        registry.registerListenerContainer(endpoint, factory, true);
+        RabbitListenerContainerFactory<?> factory =
+                applicationContext.getBean(RabbitListenerContainerFactory.class);
+
+        endpointRegistrar.registerEndpoint(endpoint, factory);
+    }
+
+    @Override
+    public void setApplicationContext(@NonNull ApplicationContext applicationContext)
+            throws BeansException {
+        this.applicationContext = applicationContext;
     }
 }

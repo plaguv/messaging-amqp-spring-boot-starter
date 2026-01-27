@@ -1,4 +1,4 @@
-package io.github.plaguv.messaging.publisher;
+package io.github.plaguv.messaging.utlity;
 
 import io.github.plaguv.contracts.common.EventEnvelope;
 import jakarta.annotation.Nonnull;

@@ -1,7 +1,8 @@
-package io.github.plaguv.messaging.publisher;
+package io.github.plaguv.messaging.utlity;
 
 import io.github.plaguv.contracts.common.EventEnvelope;
 import jakarta.annotation.Nonnull;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.*;
@@ -90,5 +91,12 @@ public class AmqpTopologyDeclarer implements TopologyDeclarer {
 
             return binding;
         });
+    }
+
+    @Override
+    public void declareAllIfAbsent(@NonNull EventEnvelope eventEnvelope) {
+        declareExchangeIfAbsent(eventEnvelope);
+        declareQueueIfAbsent(eventEnvelope);
+        declareBindingIfAbsent(eventEnvelope);
     }
 }

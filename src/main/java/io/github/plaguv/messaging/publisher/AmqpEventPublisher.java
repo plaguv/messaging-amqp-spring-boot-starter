@@ -1,6 +1,8 @@
 package io.github.plaguv.messaging.publisher;
 
 import io.github.plaguv.contracts.common.EventEnvelope;
+import io.github.plaguv.messaging.utlity.EventRouter;
+import io.github.plaguv.messaging.utlity.TopologyDeclarer;
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
