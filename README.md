@@ -21,7 +21,6 @@ The `contract` module defines the canonical messaging contracts shared across al
 - `EventEnvelope` : standardized message container
 - `EventMetadata` : technical metadata (ID, timestamp, version, producer)
 - `EventRouting` : routing intent (event type, dispatch type)
-- `EventType` : single source of truth for all domain events
 - `EventDomain` : logical domain separation
 - `EventDispatchType` : delivery semantics (`DIRECT`, `FANOUT`, `TOPIC`)
 - Strongly typed event payloads (`EventInstance` implementations)
@@ -50,7 +49,8 @@ At minimum, each application defines its logical exchange namespace:
 
 ````yaml
 amqp:
-  exchange: integrationproject
+  central_exchange: central
+  central_application: application # or ${spring.application.name}
 ````
 
 This namespace is used to derive exchanges, queues, and bindings consistently across services.
@@ -89,21 +89,18 @@ The starter automatically infers:
 
 - message headers and encoding
 
-It also handles serialization and error logging.
+It also handles serialization and error logging. 
+At minimum, each EventEnvelope builder requires a producer and a payload.
 
 ````java
-EventVersion eventVersion = new EventVersion(1);
-EventInstance eventInstance = new StoreOpenedEvent(1L);
-
+EventInstance eventInstance = new StoreOpenedEvent(5L);
 EventEnvelope envelope = EventEnvelope.builder()
-        .withEventVersion(eventVersion)
         .withProducer(StoreService.class)
-        .withDispatchType(EventDispatchType.DIRECT)
         .ofPayload(eventInstance)
         .build();
 
-// publisher is a spring-managed bean of type `EventPublisher`. 
-publisher.publishMessage(envelope);
+// publisher is a spring-managed bean of type `EventPublisher`.
+eventPublisher.publishMessage(envelope);
 ````
 
 ### 📤 Listening to an event
@@ -112,7 +109,7 @@ All required AMQP topology is derived and declared automatically.
 
 ````java
 
-@AmqpListener(event = EventType.STORE_OPENED)
+@AmqpListener
 public void onStoreOpened(StoreOpenedEvent event) {
     // handle event
 }

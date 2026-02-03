@@ -20,13 +20,13 @@ public class AmqpEventPublisherAutoConfiguration {
     public AmqpEventPublisherAutoConfiguration() {}
 
     @Bean
-    @ConditionalOnMissingBean(EventPublisher.class)
+    @ConditionalOnMissingBean
     public EventPublisher eventPublisher(RabbitTemplate rabbitTemplate, EventRouter eventRouter, ObjectMapper objectMapper) {
         return new AmqpEventPublisher(rabbitTemplate, eventRouter, objectMapper);
     }
 
     @Bean
-    @ConditionalOnMissingBean(RabbitTemplateCustomizer.class)
+    @ConditionalOnMissingBean
     public RabbitTemplateCustomizer amqpMandatoryPublisherCustomizer() {
         return rabbitTemplate -> {
             rabbitTemplate.setMandatory(true);

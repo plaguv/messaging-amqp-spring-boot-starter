@@ -1,13 +1,10 @@
 package io.github.plaguv.messaging.listener;
 
-import io.github.plaguv.contract.envelope.EventEnvelope;
-import io.github.plaguv.contract.envelope.EventType;
+import io.github.plaguv.contract.envelope.payload.EventInstance;
 import io.github.plaguv.messaging.utlity.EventRouter;
 import io.github.plaguv.messaging.utlity.TopologyDeclarer;
 import org.jspecify.annotations.NonNull;
 import org.springframework.amqp.rabbit.annotation.RabbitListenerConfigurer;
-import org.springframework.amqp.rabbit.listener.MethodRabbitListenerEndpoint;
-import org.springframework.amqp.rabbit.listener.RabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistrar;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -47,7 +44,7 @@ public class AmqpEventListenerRegistrar implements
             AmqpListener listener = method.getAnnotation(AmqpListener.class);
             if (listener == null) continue;
 
-            EventType event = listener.event();
+            Class<? extends EventInstance> event = resolveEventInstance(method);
             registerListenerForEvent(bean, beanName, method, event);
         }
         return bean;
@@ -58,25 +55,52 @@ public class AmqpEventListenerRegistrar implements
         this.applicationContext = applicationContext;
     }
 
-    private void registerListenerForEvent(Object bean, String beanName, Method method, EventType event) {
+    private Class<? extends EventInstance> resolveEventInstance(Method method) {
+        Class<?>[] parameters = method.getParameterTypes();
+
+        if (parameters.length != 1) {
+            throw new IllegalStateException(
+                    "@AmqpListener method '%s' must have exactly one parameter, but had '%d'".formatted(method.getName(), parameters.length)
+            );
+        }
+
+        Class<?> parameter = parameters[0];
+
+        if (!EventInstance.class.isAssignableFrom(parameter)) {
+            throw new IllegalStateException(
+                    "@AmqpListener method '%s' must have a parameter of type EventInstance, but had '%s'".formatted(method.getName(), parameter.getComponentType().getSimpleName())
+            );
+        }
+
+        @SuppressWarnings("unchecked")
+        Class<? extends EventInstance> eventClass = (Class<? extends EventInstance>) parameter;
+
+        return eventClass;
+    }
+
+    private void registerListenerForEvent(Object bean, String beanName, Method method, Class<? extends EventInstance> event) {
         if (endpointRegistrar == null) {
             throw new IllegalStateException("RabbitListenerEndpointRegistrar not initialized yet");
         }
 
-        // TODO replace with actual envelope creation
-        EventEnvelope envelope = null;
-        String queueName = eventRouter.resolveQueue(event);
-        topologyDeclarer.declareAllIfAbsent(envelope);
+        System.out.println(bean.getClass().getName());
+        System.out.println(beanName);
+        System.out.println(method.getName());
+        System.out.println(event.getSimpleName());
 
-        MethodRabbitListenerEndpoint endpoint = new MethodRabbitListenerEndpoint();
-        endpoint.setBean(bean);
-        endpoint.setMethod(method);
-        endpoint.setQueueNames(queueName);
-        endpoint.setId("%s#%s#%s".formatted(beanName, method.getName(), event.name()));
-        endpoint.setExclusive(false);
-
-        RabbitListenerContainerFactory<?> factory = applicationContext.getBean(RabbitListenerContainerFactory.class);
-
-        endpointRegistrar.registerEndpoint(endpoint, factory);
+//        EventEnvelope envelope = null;
+//        String queueName = eventRouter.resolveQueue(event);
+//        topologyDeclarer.declareAllIfAbsent(envelope);
+//
+//        MethodRabbitListenerEndpoint endpoint = new MethodRabbitListenerEndpoint();
+//        endpoint.setBean(bean);
+//        endpoint.setMethod(method);
+//        endpoint.setQueueNames(queueName);
+//        endpoint.setId("%s#%s#%s".formatted(beanName, method.getName(), event.name()));
+//        endpoint.setExclusive(false);
+//
+//        RabbitListenerContainerFactory<?> factory = applicationContext.getBean(RabbitListenerContainerFactory.class);
+//
+//        endpointRegistrar.registerEndpoint(endpoint, factory);
     }
 }

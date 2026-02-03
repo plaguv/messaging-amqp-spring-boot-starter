@@ -1,6 +1,7 @@
 package io.github.plaguv.messaging.publisher;
 
 import io.github.plaguv.contract.envelope.EventEnvelope;
+import io.github.plaguv.messaging.utlity.helper.ClassNameExtractor;
 import io.github.plaguv.messaging.utlity.EventRouter;
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
@@ -58,8 +59,7 @@ public class AmqpEventPublisher implements EventPublisher {
         // Optional Header Content
         props.setHeader(
                 "x-event-type",
-                eventEnvelope.payload().getClass().getSimpleName().replaceAll("(?<!^)([A-Z])", "_$1").toLowerCase()
-                // This transforms differentiating cases to have an underscore. StoreClosedEvent -> store_closed_event
+                ClassNameExtractor.extractUpperLower(eventEnvelope.payload().getClass())
         );
         props.setHeader(
                 "x-event-domain",
@@ -71,7 +71,7 @@ public class AmqpEventPublisher implements EventPublisher {
         );
         props.setHeader(
                 "x-producer",
-                eventEnvelope.metadata().producer().getName()
+                ClassNameExtractor.extractUpperLower(eventEnvelope.metadata().producer())
         );
         try {
             return new Message(

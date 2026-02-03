@@ -19,13 +19,13 @@ public class AmqpAutoConfiguration {
     public AmqpAutoConfiguration() {}
 
     @Bean
-    @ConditionalOnMissingBean(EventRouter.class)
+    @ConditionalOnMissingBean
     public EventRouter eventRouter(AmqpProperties amqpProperties) {
         return new AmqpEventRouter(amqpProperties);
     }
 
     @Bean
-    @ConditionalOnMissingBean(TopologyDeclarer.class)
+    @ConditionalOnMissingBean
     public TopologyDeclarer topologyDeclarer(RabbitAdmin rabbitAdmin, EventRouter eventRouter) {
         return new AmqpTopologyDeclarer(rabbitAdmin, eventRouter);
     }

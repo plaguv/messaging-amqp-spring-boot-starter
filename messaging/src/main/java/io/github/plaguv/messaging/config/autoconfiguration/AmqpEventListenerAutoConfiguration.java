@@ -14,7 +14,7 @@ public class AmqpEventListenerAutoConfiguration {
     public AmqpEventListenerAutoConfiguration() {}
 
     @Bean
-    @ConditionalOnMissingBean(EventListenerRegistrar.class)
+    @ConditionalOnMissingBean
     public EventListenerRegistrar eventListenerRegistrar(EventRouter eventRouter, TopologyDeclarer topologyDeclarer) {
         return new AmqpEventListenerRegistrar(eventRouter, topologyDeclarer);
     }

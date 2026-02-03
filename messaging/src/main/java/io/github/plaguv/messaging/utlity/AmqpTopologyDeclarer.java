@@ -35,8 +35,8 @@ public class AmqpTopologyDeclarer implements TopologyDeclarer {
 
         declaredExchanges.computeIfAbsent(exchangeName, name -> {
             Exchange exchange = switch (eventEnvelope.routing().eventDispatchType()) {
-                case DIRECT    -> new DirectExchange(name, true, false);
-                case TOPIC     -> new TopicExchange (name, true, false);
+                case DIRECT -> new DirectExchange(name, true, false);
+                case TOPIC -> new TopicExchange(name, true, false);
                 case FANOUT -> new FanoutExchange(name, true, false);
             };
 
