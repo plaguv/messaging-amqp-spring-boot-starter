@@ -1,6 +1,8 @@
 package io.github.plaguv.messaging.config.autoconfiguration;
 
+import io.github.plaguv.messaging.listener.AmqpEventListenerDiscoverer;
 import io.github.plaguv.messaging.listener.AmqpEventListenerRegistrar;
+import io.github.plaguv.messaging.listener.EventListenerDiscoverer;
 import io.github.plaguv.messaging.listener.EventListenerRegistrar;
 import io.github.plaguv.messaging.utlity.EventRouter;
 import io.github.plaguv.messaging.utlity.TopologyDeclarer;
@@ -12,6 +14,12 @@ import org.springframework.context.annotation.Bean;
 public class AmqpEventListenerAutoConfiguration {
 
     public AmqpEventListenerAutoConfiguration() {}
+
+    @Bean
+    @ConditionalOnMissingBean
+    public EventListenerDiscoverer eventListenerDiscoverer() {
+        return new AmqpEventListenerDiscoverer();
+    }
 
     @Bean
     @ConditionalOnMissingBean

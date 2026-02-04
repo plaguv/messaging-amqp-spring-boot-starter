@@ -7,12 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
-import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-@Component
 public class AmqpTopologyDeclarer implements TopologyDeclarer {
 
     private static final Logger log = LoggerFactory.getLogger(AmqpTopologyDeclarer.class);

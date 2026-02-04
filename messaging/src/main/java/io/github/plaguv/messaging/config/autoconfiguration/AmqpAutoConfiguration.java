@@ -11,12 +11,20 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 @AutoConfiguration(after = RabbitAutoConfiguration.class)
 @EnableConfigurationProperties(AmqpProperties.class)
 public class AmqpAutoConfiguration {
 
     public AmqpAutoConfiguration() {}
+
+    @Bean
+    @ConditionalOnMissingBean
+    public ObjectMapper objectMapper() {
+        return JsonMapper.builder().build();
+    }
 
     @Bean
     @ConditionalOnMissingBean

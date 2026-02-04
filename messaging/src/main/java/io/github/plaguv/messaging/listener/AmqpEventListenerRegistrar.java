@@ -3,23 +3,16 @@ package io.github.plaguv.messaging.listener;
 import io.github.plaguv.contract.envelope.payload.EventInstance;
 import io.github.plaguv.messaging.utlity.EventRouter;
 import io.github.plaguv.messaging.utlity.TopologyDeclarer;
-import org.jspecify.annotations.NonNull;
+import jakarta.annotation.Nonnull;
 import org.springframework.amqp.rabbit.annotation.RabbitListenerConfigurer;
 import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistrar;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 
-@Component
-public class AmqpEventListenerRegistrar implements
-        EventListenerRegistrar,
-        RabbitListenerConfigurer,
-        ApplicationContextAware,
-        BeanPostProcessor {
+public class AmqpEventListenerRegistrar implements EventListenerRegistrar, RabbitListenerConfigurer, ApplicationContextAware{
 
     private final EventRouter eventRouter;
     private final TopologyDeclarer topologyDeclarer;
@@ -33,25 +26,12 @@ public class AmqpEventListenerRegistrar implements
     }
 
     @Override
-    public void configureRabbitListeners(@NonNull RabbitListenerEndpointRegistrar registrar) {
+    public void configureRabbitListeners(@Nonnull RabbitListenerEndpointRegistrar registrar) {
         this.endpointRegistrar = registrar;
     }
 
     @Override
-    public Object postProcessAfterInitialization(Object bean, @NonNull String beanName) throws BeansException {
-        for (Method method : bean.getClass().getDeclaredMethods()) {
-
-            AmqpListener listener = method.getAnnotation(AmqpListener.class);
-            if (listener == null) continue;
-
-            Class<? extends EventInstance> event = resolveEventInstance(method);
-            registerListenerForEvent(bean, beanName, method, event);
-        }
-        return bean;
-    }
-
-    @Override
-    public void setApplicationContext(@NonNull ApplicationContext applicationContext) throws BeansException {
+    public void setApplicationContext(@Nonnull ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
 

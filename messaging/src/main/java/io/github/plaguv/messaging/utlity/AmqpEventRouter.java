@@ -4,9 +4,7 @@ import io.github.plaguv.contract.envelope.EventEnvelope;
 import io.github.plaguv.messaging.config.properties.AmqpProperties;
 import io.github.plaguv.messaging.utlity.helper.ClassNameExtractor;
 import jakarta.annotation.Nonnull;
-import org.springframework.stereotype.Component;
 
-@Component
 public class AmqpEventRouter implements EventRouter {
 
     private final String BASE_URI;
