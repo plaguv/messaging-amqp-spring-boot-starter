@@ -2,7 +2,6 @@ package io.github.plaguv.messaging.publisher;
 
 import io.github.plaguv.contract.envelope.EventEnvelope;
 import io.github.plaguv.contract.envelope.payload.Event;
-import io.github.plaguv.contract.envelope.routing.EventRoutingDescriptor;
 import io.github.plaguv.messaging.utlity.helper.ClassNameExtractor;
 import io.github.plaguv.messaging.utlity.EventRouter;
 import jakarta.annotation.Nonnull;
@@ -35,8 +34,8 @@ public class AmqpEventPublisher implements EventPublisher {
     public void publishMessage(@Nonnull EventEnvelope eventEnvelope) {
         try {
             rabbitTemplate.convertAndSend(
-                    eventRouter.resolveExchange(EventRoutingDescriptor.of(eventEnvelope)),
-                    eventRouter.resolveRoutingKey(EventRoutingDescriptor.of(eventEnvelope)),
+                    eventRouter.resolveExchange(eventEnvelope),
+                    eventRouter.resolveRoutingKey(eventEnvelope),
                     buildMessage(eventEnvelope)
             );
         } catch (Exception e) {

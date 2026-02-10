@@ -82,7 +82,7 @@ public record EventEnvelope(
             return this;
         }
 
-        public Builder withEventDispatchType(EventScope eventScope) {
+        public Builder withEventScope(EventScope eventScope) {
             this.eventScope = eventScope;
             return this;
         }

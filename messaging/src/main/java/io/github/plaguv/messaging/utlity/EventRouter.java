@@ -1,19 +1,21 @@
 package io.github.plaguv.messaging.utlity;
 
-import io.github.plaguv.contract.envelope.routing.EventRoutingDescriptor;
+import io.github.plaguv.contract.envelope.EventEnvelope;
 import jakarta.annotation.Nonnull;
+
+import java.util.Set;
 
 public interface EventRouter {
 
     @Nonnull
-    String resolveQueue(@Nonnull EventRoutingDescriptor eventRoutingDescriptor);
+    String resolveQueue(@Nonnull EventEnvelope eventEnvelope);
 
     @Nonnull
-    String resolveExchange(@Nonnull EventRoutingDescriptor eventRoutingDescriptor);
+    String resolveExchange(@Nonnull EventEnvelope eventEnvelope);
 
     @Nonnull
-    String resolveRoutingKey(@Nonnull EventRoutingDescriptor eventRoutingDescriptor);
+    String resolveRoutingKey(@Nonnull EventEnvelope eventEnvelope);
 
     @Nonnull
-    String resolveBinding(@Nonnull EventRoutingDescriptor eventRoutingDescriptor);
+    Set<String> resolveBindingKey(@Nonnull EventEnvelope eventEnvelope);
 }

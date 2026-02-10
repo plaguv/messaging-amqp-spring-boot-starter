@@ -1,7 +1,6 @@
 package io.github.plaguv.messaging.listener;
 
 import io.github.plaguv.contract.envelope.payload.Event;
-import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ListableBeanFactory;
@@ -61,7 +60,6 @@ public class AmqpEventListenerDiscoverer implements EventListenerDiscoverer, Sma
     }
 
     @Override
-    @Nonnull
     public Map<Method, Class<?>> getListeners() {
         return listeners;
     }

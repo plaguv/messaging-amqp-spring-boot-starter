@@ -2,41 +2,115 @@ package io.github.plaguv.messaging.utility;
 
 import io.github.plaguv.contract.envelope.EventEnvelope;
 import io.github.plaguv.contract.envelope.payload.pos.StoreOpenedEvent;
-import io.github.plaguv.contract.envelope.routing.EventRoutingDescriptor;
+import io.github.plaguv.contract.envelope.routing.EventScope;
 import io.github.plaguv.messaging.config.properties.AmqpProperties;
 import io.github.plaguv.messaging.utlity.AmqpEventRouter;
 import io.github.plaguv.messaging.utlity.EventRouter;
 import org.junit.jupiter.api.*;
 
+import java.util.Arrays;
+import java.util.Set;
+
 class AmqpEventRouterTest {
 
-    private AmqpProperties amqpProperties;
     private EventRouter eventRouter;
+
+    private StoreOpenedEvent storeOpenedEvent;
     private EventEnvelope eventEnvelope;
-    private EventRoutingDescriptor eventRoutingDescriptor;
 
     @BeforeEach
     void beforeEach() {
-        amqpProperties = new AmqpProperties(
-                "integrationsprojekt",
-                "kasse"
+        AmqpProperties amqpProperties = new AmqpProperties(
+                "central",
+                "starter",
+                null,
+                null,
+                null,
+                null,
+                null
         );
+
         eventRouter = new AmqpEventRouter(
                 amqpProperties
         );
+
+        storeOpenedEvent = new StoreOpenedEvent(5L);
+
         eventEnvelope = EventEnvelope.builder()
-                .withProducer(AmqpEventRouter.class)
-                .ofPayload(new StoreOpenedEvent(5L))
+                .ofPayload(storeOpenedEvent)
                 .build();
-        eventRoutingDescriptor = EventRoutingDescriptor.of(eventEnvelope);
     }
 
     @Test
-    @DisplayName("Should resolve the correct naming scheme based on the envelopes contents")
-    void resolveNamingScheme() {
-        Assertions.assertEquals("integrationsprojekt.starter.store.store_opened_event.queue", eventRouter.resolveQueue(eventEnvelope));
-        Assertions.assertEquals("integrationsprojekt.starter.store.store_opened_event.fanout", eventRouter.resolveExchange(eventEnvelope));
-        Assertions.assertEquals("store.store_opened_event.fanout", eventRouter.resolveRoutingKey(eventEnvelope));
-        Assertions.assertEquals("store.store_opened_event.fanout", eventRouter.resolveBinding(eventEnvelope));
+    @DisplayName("Should resolve the queues name based on the event envelope")
+    void resolveQueue() {
+        Assertions.assertEquals(
+                "starter.store.store_opened_event.queue",
+                eventRouter.resolveQueue(eventEnvelope)
+        );
+    }
+
+    @Test
+    @DisplayName("Should resolve the exchanges name based on the event envelope")
+    void resolveExchange() {
+        Assertions.assertEquals(
+                "central.events",
+                eventRouter.resolveExchange(eventEnvelope)
+        );
+    }
+
+    @Test
+    @DisplayName("Should resolve the routing key based on the event envelope")
+    void resolveRoutingKeyWith() {
+        eventEnvelope = EventEnvelope.builder()
+                .withEventScope(EventScope.BROADCAST)
+                .ofPayload(storeOpenedEvent)
+                .build();
+        Assertions.assertEquals(
+                "store.store_opened_event",
+                eventRouter.resolveRoutingKey(eventEnvelope)
+        );
+
+        eventEnvelope = EventEnvelope.builder()
+                .withEventScope(EventScope.GROUP)
+                .withWildcard("cashier")
+                .ofPayload(storeOpenedEvent)
+                .build();
+        Assertions.assertEquals(
+                "store.store_opened_event.group.cashier",
+                eventRouter.resolveRoutingKey(eventEnvelope)
+        );
+
+        eventEnvelope = EventEnvelope.builder()
+                .withEventScope(EventScope.TARGET)
+                .withWildcard("cashier")
+                .ofPayload(storeOpenedEvent)
+                .build();
+        Assertions.assertEquals(
+                "store.store_opened_event.target.cashier",
+                eventRouter.resolveRoutingKey(eventEnvelope)
+        );
+    }
+
+    @Test
+    @DisplayName("Should resolve the binding keys based on the event envelope")
+    void resolveBindingKey() {
+        eventEnvelope = EventEnvelope.builder()
+                .withWildcard("cashier")
+                .ofPayload(storeOpenedEvent)
+                .build();
+
+        Set<String> expectedBindings = Set.of(
+                "store.store_opened_event",                 // Scope: Broadcast
+                "store.store_opened_event.group.cashier",   // Scope: Group
+                "store.store_opened_event.target.cashier"   // Scope: Target
+        );
+        Set<String> actualBindings = eventRouter.resolveBindingKey(eventEnvelope);
+
+        Assertions.assertEquals(expectedBindings.size(), actualBindings.size());
+        Assertions.assertArrayEquals(
+                Arrays.stream(expectedBindings.toArray()).sorted().toArray(),
+                Arrays.stream(actualBindings.toArray()).sorted().toArray()
+        );
     }
 }

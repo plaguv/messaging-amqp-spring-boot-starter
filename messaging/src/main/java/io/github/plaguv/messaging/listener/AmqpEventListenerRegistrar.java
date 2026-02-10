@@ -1,9 +1,6 @@
 package io.github.plaguv.messaging.listener;
 
-import io.github.plaguv.contract.envelope.payload.Event;
-import io.github.plaguv.contract.envelope.payload.EventDomain;
-import io.github.plaguv.contract.envelope.routing.EventScope;
-import io.github.plaguv.contract.envelope.routing.EventRoutingDescriptor;
+import io.github.plaguv.contract.envelope.EventEnvelope;
 import io.github.plaguv.messaging.utlity.EventRouter;
 import io.github.plaguv.messaging.utlity.TopologyDeclarer;
 import jakarta.annotation.Nonnull;
@@ -18,6 +15,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 public class AmqpEventListenerRegistrar implements EventListenerRegistrar, RabbitListenerConfigurer, ApplicationContextAware {
 
@@ -47,29 +45,28 @@ public class AmqpEventListenerRegistrar implements EventListenerRegistrar, Rabbi
 
     @Override
     public void registerListener(@Nonnull Object bean, @Nonnull Method method) {
+        if (!Arrays.stream(bean.getClass().getDeclaredMethods()).toList().contains(method)) {
+            throw new IllegalArgumentException("Parameter 'method' '%s' is not contained in parameter 'bean' '%s'."
+                    .formatted(method, bean));
+        }
         if (!discoverer.getListeners().containsKey(method)) {
-            return;
+            throw new IllegalStateException("Parameter 'method' '%s' has not been registered yet."
+                    .formatted(method));
         }
 
         Class<?> eventClass = discoverer.getListeners().get(method);
-        EventDomain eventDomain = eventClass.getAnnotation(Event.class).domain();
+        EventEnvelope eventEnvelope = EventEnvelope.builder().ofPayload(eventClass).build();
 
-        EventRoutingDescriptor eventRoutingDescriptor = new EventRoutingDescriptor(
-                eventClass,
-                eventDomain,
-                EventScope.BROADCAST
-        );
+        topologyDeclarer.declareQueueIfAbsent(eventEnvelope);
+        topologyDeclarer.declareExchangeIfAbsent(eventEnvelope);
+        topologyDeclarer.declareBindingIfAbsent(eventEnvelope);
 
-        topologyDeclarer.declareQueueIfAbsent(eventRoutingDescriptor);
-        topologyDeclarer.declareExchangeIfAbsent(eventRoutingDescriptor);
-        topologyDeclarer.declareBindingIfAbsent(eventRoutingDescriptor);
-
-        String queue = eventRouter.resolveQueue(eventRoutingDescriptor);
+        String queueName = eventRouter.resolveQueue(eventEnvelope);
 
         MethodRabbitListenerEndpoint endpoint = new MethodRabbitListenerEndpoint();
         endpoint.setBean(bean);
         endpoint.setMethod(method);
-        endpoint.setQueueNames(queue);
+        endpoint.setQueueNames(queueName);
 
         RabbitListenerContainerFactory<?> factory = applicationContext.getBean(RabbitListenerContainerFactory.class);
 

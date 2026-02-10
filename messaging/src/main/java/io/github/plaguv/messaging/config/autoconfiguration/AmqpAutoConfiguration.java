@@ -1,6 +1,7 @@
 package io.github.plaguv.messaging.config.autoconfiguration;
 
 import io.github.plaguv.messaging.config.properties.AmqpProperties;
+import io.github.plaguv.messaging.config.properties.AmqpStartupProperties;
 import io.github.plaguv.messaging.utlity.AmqpEventRouter;
 import io.github.plaguv.messaging.utlity.AmqpTopologyDeclarer;
 import io.github.plaguv.messaging.utlity.EventRouter;
@@ -15,7 +16,7 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
 @AutoConfiguration(after = RabbitAutoConfiguration.class)
-@EnableConfigurationProperties(AmqpProperties.class)
+@EnableConfigurationProperties({AmqpProperties.class, AmqpStartupProperties.class})
 public class AmqpAutoConfiguration {
 
     public AmqpAutoConfiguration() {}
@@ -34,7 +35,7 @@ public class AmqpAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public TopologyDeclarer topologyDeclarer(RabbitAdmin rabbitAdmin, EventRouter eventRouter) {
-        return new AmqpTopologyDeclarer(rabbitAdmin, eventRouter);
+    public TopologyDeclarer topologyDeclarer(RabbitAdmin rabbitAdmin, EventRouter eventRouter, AmqpProperties amqpProperties) {
+        return new AmqpTopologyDeclarer(rabbitAdmin, eventRouter, amqpProperties);
     }
 }

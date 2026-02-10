@@ -1,56 +1,77 @@
 package io.github.plaguv.messaging.utlity;
 
+import io.github.plaguv.contract.envelope.EventEnvelope;
+import io.github.plaguv.contract.envelope.payload.Event;
+import io.github.plaguv.contract.envelope.routing.EventRouting;
 import io.github.plaguv.contract.envelope.routing.EventScope;
-import io.github.plaguv.contract.envelope.routing.EventRoutingDescriptor;
 import io.github.plaguv.messaging.config.properties.AmqpProperties;
 import io.github.plaguv.messaging.utlity.helper.ClassNameExtractor;
 import jakarta.annotation.Nonnull;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class AmqpEventRouter implements EventRouter {
 
-    private final String CENTRAL_APPLICATION;
+    private final AmqpProperties amqpProperties;
 
     public AmqpEventRouter(AmqpProperties amqpProperties) {
-        CENTRAL_APPLICATION = amqpProperties.centralApplication().toLowerCase();
+        this.amqpProperties = amqpProperties;
     }
 
-    // TODO: naming scheme change in future. central exchange routing to multiple, with unique binding / routing-key. no need for types
-
     @Override
-    public @Nonnull String resolveQueue(@Nonnull EventRoutingDescriptor eventRoutingDescriptor) {
-        return "%s.%s.queue".formatted(
-                CENTRAL_APPLICATION,
-                ClassNameExtractor.extractUpperLower(eventRoutingDescriptor.type())
+    public @Nonnull String resolveQueue(@Nonnull EventEnvelope eventEnvelope) {
+        return "%s.%s.%s.queue".formatted(
+                amqpProperties.centralApplication(),
+                eventEnvelope.payload().getClass().getAnnotation(Event.class).domain().name().toLowerCase(),
+                ClassNameExtractor.extractUpperLower(eventEnvelope.payload().getClass())
         );
     }
 
     @Override
-    public @Nonnull String resolveExchange(@Nonnull EventRoutingDescriptor eventRoutingDescriptor) {
+    public @Nonnull String resolveExchange(@Nonnull EventEnvelope eventEnvelope) {
+        return "%s.events".formatted(
+                amqpProperties.centralExchange()
+        );
+    }
+
+    @Override
+    public @Nonnull String resolveRoutingKey(@Nonnull EventEnvelope eventEnvelope) {
         return "%s.%s".formatted(
-                ClassNameExtractor.extractUpperLower(eventRoutingDescriptor.type()),
-                eventRoutingDescriptor.dispatchType().name().toLowerCase()
-        );
+                eventEnvelope.payload().getClass().getAnnotation(Event.class).domain().name().toLowerCase(),
+                ClassNameExtractor.extractUpperLower(eventEnvelope.payload().getClass())
+        ).concat(createScopingBranchKey(eventEnvelope));
     }
 
     @Override
-    public @Nonnull String resolveRoutingKey(@Nonnull EventRoutingDescriptor eventRoutingDescriptor) {
-        if (eventRoutingDescriptor.dispatchType() == EventScope.GROUP && eventRoutingDescriptor.wildcard().isPresent()) {
-            return eventRoutingDescriptor.wildcard().get();
-        } else {
-            return "%s.%s.%s".formatted(
-                    eventRoutingDescriptor.domain().name().toLowerCase(),
-                    ClassNameExtractor.extractUpperLower(eventRoutingDescriptor.type()),
-                    eventRoutingDescriptor.dispatchType().name().toLowerCase()
-            );
+    public @Nonnull Set<String> resolveBindingKey(@Nonnull EventEnvelope eventEnvelope) {
+        Set<String> bindings = new HashSet<>();
+        for (EventScope eventScope : EventScope.values()) {
+            bindings.add(
+                    resolveRoutingKey(
+                            copyEventEnvelopeWithScope(eventEnvelope, eventScope)));
         }
+        return bindings;
     }
 
-    @Override
-    public @Nonnull String resolveBinding(@Nonnull EventRoutingDescriptor eventRoutingDescriptor) {
-        return "%s.%s.%s".formatted(
-                eventRoutingDescriptor.domain().name().toLowerCase(),
-                ClassNameExtractor.extractUpperLower(eventRoutingDescriptor.type()),
-                eventRoutingDescriptor.dispatchType().name().toLowerCase()
+    private String createScopingBranchKey(EventEnvelope eventEnvelope) {
+        return switch (eventEnvelope.routing().eventScope()) {
+            case TARGET, GROUP -> ".%s.%s".formatted(
+                    eventEnvelope.routing().eventScope().name().toLowerCase(),
+                    eventEnvelope.routing().eventWildcard()
+            );
+            case BROADCAST -> "";
+        };
+    }
+
+    private EventEnvelope copyEventEnvelopeWithScope(EventEnvelope eventEnvelope, EventScope eventScope) {
+        return new EventEnvelope(
+                eventEnvelope.metadata(),
+                new EventRouting(
+                        eventScope,
+                        eventEnvelope.routing().eventWildcard()
+                ),
+                eventEnvelope.payload()
         );
     }
 }
