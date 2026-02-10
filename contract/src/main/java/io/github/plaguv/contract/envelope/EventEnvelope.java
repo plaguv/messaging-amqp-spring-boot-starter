@@ -1,18 +1,19 @@
 package io.github.plaguv.contract.envelope;
 
-import io.github.plaguv.contract.envelope.payload.Event;
 import io.github.plaguv.contract.envelope.metadata.EventMetadata;
+import io.github.plaguv.contract.envelope.payload.EventPayload;
 import io.github.plaguv.contract.envelope.routing.EventScope;
 import io.github.plaguv.contract.envelope.routing.EventRouting;
 import jakarta.annotation.Nonnull;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 public record EventEnvelope(
         EventMetadata metadata,
         EventRouting routing,
-        Object payload
+        EventPayload payload
 ) {
     public EventEnvelope {
         if (metadata == null) {
@@ -23,9 +24,6 @@ public record EventEnvelope(
         }
         if (payload == null) {
             throw new IllegalArgumentException("EventEnvelope attribute 'payload' cannot be null");
-        }
-        if (!payload.getClass().isAnnotationPresent(Event.class)) {
-            throw new IllegalArgumentException("EventEnvelope attribute 'payload' must be annotated with @Event. Received '%s'.".formatted(payload.getClass()));
         }
     }
 
@@ -41,20 +39,20 @@ public record EventEnvelope(
         private Object producer;
 
         private EventScope eventScope = EventScope.BROADCAST;
-        private String eventWildcard = "";
+        private String eventWildcard;
 
-        private Object payload;
+        private Class<?> type;
+        private Optional<?> payload = Optional.empty();
 
-        private Builder() {
-        }
+        private Builder() {}
 
-        public Builder ofMetadata(EventMetadata metadata) {
-            if (metadata == null) {
-                throw new IllegalArgumentException("EventMetadata attribute 'metadata' cannot be null");
+        public Builder ofMetadata(EventMetadata eventMetadata) {
+            if (eventMetadata == null) {
+                throw new IllegalArgumentException("Parameter 'eventMetadata' cannot be null");
             }
-            this.eventId = metadata.eventId();
-            this.occurredAt = metadata.occurredAt();
-            this.producer = metadata.producer();
+            this.eventId = eventMetadata.eventId();
+            this.occurredAt = eventMetadata.occurredAt();
+            this.producer = eventMetadata.producer();
             return this;
         }
 
@@ -75,7 +73,7 @@ public record EventEnvelope(
 
         public Builder ofRouting(EventRouting eventRouting) {
             if (eventRouting == null) {
-                throw new IllegalArgumentException("EventRouting attribute 'routing' cannot be null");
+                throw new IllegalArgumentException("Parameter 'eventRouting' cannot be null");
             }
             this.eventScope = eventRouting.eventScope();
             this.eventWildcard = eventRouting.eventWildcard();
@@ -92,30 +90,46 @@ public record EventEnvelope(
             return this;
         }
 
-        public Builder ofPayload(Object payload) {
-            if (payload == null) {
-                throw new IllegalArgumentException("EventPayload attribute 'payload' cannot be null");
+        public Builder ofPayload(EventPayload eventPayload) {
+            if (eventPayload == null) {
+                throw new IllegalArgumentException("Parameter 'eventPayload' cannot be null");
             }
-            this.payload = payload;
+            this.type = eventPayload.type();
+            this.payload = eventPayload.payload();
+            return this;
+        }
+
+        public Builder withPayload(Object payload) {
+            this.payload = Optional.of(payload);
+            return this;
+        }
+
+        public Builder withPayloadType(Class<?> payloadType) {
+            this.type = payloadType;
             return this;
         }
 
         public EventEnvelope build() {
-            EventMetadata metadata = new EventMetadata(
+            EventMetadata eventMetadata = new EventMetadata(
                     eventId,
                     occurredAt,
                     producer
             );
 
-            EventRouting routing = new EventRouting(
+            EventRouting eventRouting = new EventRouting(
                     eventScope,
                     eventWildcard
             );
 
-            return new EventEnvelope(
-                    metadata,
-                    routing,
+            EventPayload eventPayload = new EventPayload(
+                    type,
                     payload
+            );
+
+            return new EventEnvelope(
+                    eventMetadata,
+                    eventRouting,
+                    eventPayload
             );
         }
     }

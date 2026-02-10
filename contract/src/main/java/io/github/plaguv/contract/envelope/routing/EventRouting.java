@@ -12,24 +12,15 @@ public record EventRouting(
                     "EventRouting attribute 'eventDispatchType' cannot be null"
             );
         }
-        if (eventScope != EventScope.BROADCAST && (eventWildcard == null || eventWildcard.isBlank())) {
+        if (eventWildcard == null) {
+            eventWildcard = "";
+        }
+        if (eventScope != EventScope.BROADCAST && (eventWildcard.isBlank())) {
             throw new IllegalArgumentException(
                     "EventRouting attribute 'eventWildcard' cannot be null or empty when scope is set to '%s' or '%s'"
                     .formatted(EventScope.GROUP, EventScope.TARGET)
             );
         }
-    }
-
-    public EventRouting(EventScope eventScope) {
-        this(eventScope, null);
-    }
-
-    public static EventRouting valueOf(EventScope eventScope) {
-        return new EventRouting(eventScope, null);
-    }
-
-    public static EventRouting valueOf(EventScope eventScope, String wildcard) {
-        return new EventRouting(eventScope, wildcard);
     }
 
     @Override

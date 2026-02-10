@@ -1,8 +1,7 @@
 package io.github.plaguv.messaging.utlity;
 
 import io.github.plaguv.contract.envelope.EventEnvelope;
-import io.github.plaguv.contract.envelope.payload.Event;
-import io.github.plaguv.contract.envelope.routing.EventRouting;
+import io.github.plaguv.contract.event.Event;
 import io.github.plaguv.contract.envelope.routing.EventScope;
 import io.github.plaguv.messaging.config.properties.AmqpProperties;
 import io.github.plaguv.messaging.utlity.helper.ClassNameExtractor;
@@ -11,6 +10,7 @@ import jakarta.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.Set;
 
+//TODO: better formating
 public class AmqpEventRouter implements EventRouter {
 
     private final AmqpProperties amqpProperties;
@@ -23,8 +23,8 @@ public class AmqpEventRouter implements EventRouter {
     public @Nonnull String resolveQueue(@Nonnull EventEnvelope eventEnvelope) {
         return "%s.%s.%s.queue".formatted(
                 amqpProperties.centralApplication(),
-                eventEnvelope.payload().getClass().getAnnotation(Event.class).domain().name().toLowerCase(),
-                ClassNameExtractor.extractUpperLower(eventEnvelope.payload().getClass())
+                eventEnvelope.payload().type().getAnnotation(Event.class).domain().name().toLowerCase(),
+                ClassNameExtractor.extractUpperLower(eventEnvelope.payload().type())
         );
     }
 
@@ -38,9 +38,9 @@ public class AmqpEventRouter implements EventRouter {
     @Override
     public @Nonnull String resolveRoutingKey(@Nonnull EventEnvelope eventEnvelope) {
         return "%s.%s".formatted(
-                eventEnvelope.payload().getClass().getAnnotation(Event.class).domain().name().toLowerCase(),
-                ClassNameExtractor.extractUpperLower(eventEnvelope.payload().getClass())
-        ).concat(createScopingBranchKey(eventEnvelope));
+                eventEnvelope.payload().type().getAnnotation(Event.class).domain().name().toLowerCase(),
+                ClassNameExtractor.extractUpperLower(eventEnvelope.payload().type())
+        ).concat(createScopingSuffix(eventEnvelope));
     }
 
     @Override
@@ -48,30 +48,28 @@ public class AmqpEventRouter implements EventRouter {
         Set<String> bindings = new HashSet<>();
         for (EventScope eventScope : EventScope.values()) {
             bindings.add(
-                    resolveRoutingKey(
-                            copyEventEnvelopeWithScope(eventEnvelope, eventScope)));
+                    "%s.%s".formatted(
+                            eventEnvelope.payload().type().getAnnotation(Event.class).domain().name().toLowerCase(),
+                            ClassNameExtractor.extractUpperLower(eventEnvelope.payload().type())
+                    ).concat(createScopingSuffix(eventScope, amqpProperties.centralApplication())));
         }
         return bindings;
     }
 
-    private String createScopingBranchKey(EventEnvelope eventEnvelope) {
-        return switch (eventEnvelope.routing().eventScope()) {
+    private String createScopingSuffix(EventScope eventScope, String eventWildcard) {
+        return switch (eventScope) {
             case TARGET, GROUP -> ".%s.%s".formatted(
-                    eventEnvelope.routing().eventScope().name().toLowerCase(),
-                    eventEnvelope.routing().eventWildcard()
+                    eventScope.name().toLowerCase(),
+                    eventWildcard
             );
             case BROADCAST -> "";
         };
     }
 
-    private EventEnvelope copyEventEnvelopeWithScope(EventEnvelope eventEnvelope, EventScope eventScope) {
-        return new EventEnvelope(
-                eventEnvelope.metadata(),
-                new EventRouting(
-                        eventScope,
-                        eventEnvelope.routing().eventWildcard()
-                ),
-                eventEnvelope.payload()
+    private String createScopingSuffix(EventEnvelope eventEnvelope) {
+        return createScopingSuffix(
+                eventEnvelope.routing().eventScope(),
+                eventEnvelope.routing().eventWildcard()
         );
     }
 }

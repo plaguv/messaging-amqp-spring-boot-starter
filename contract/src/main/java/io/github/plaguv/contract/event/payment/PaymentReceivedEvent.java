@@ -1,7 +1,7 @@
-package io.github.plaguv.contract.envelope.payload.payment;
+package io.github.plaguv.contract.event.payment;
 
-import io.github.plaguv.contract.envelope.payload.Event;
-import io.github.plaguv.contract.envelope.payload.EventDomain;
+import io.github.plaguv.contract.event.Event;
+import io.github.plaguv.contract.event.EventDomain;
 
 @Event(domain = EventDomain.PAYMENT)
 public record PaymentReceivedEvent(

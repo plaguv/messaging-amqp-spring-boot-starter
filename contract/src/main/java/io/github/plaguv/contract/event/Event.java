@@ -1,4 +1,4 @@
-package io.github.plaguv.contract.envelope.payload;
+package io.github.plaguv.contract.event;
 
 import java.lang.annotation.*;
 

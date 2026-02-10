@@ -5,7 +5,7 @@ import io.github.plaguv.contract.envelope.payload.EventInstance;
 import io.github.plaguv.contract.envelope.metadata.EventMetadata;
 import io.github.plaguv.contract.envelope.metadata.EventVersion;
 import io.github.plaguv.contract.envelope.routing.EventScope;
-import io.github.plaguv.contract.envelope.payload.pos.StoreOpenedEvent;
+import io.github.plaguv.contract.event.pos.StoreOpenedEvent;
 import io.github.plaguv.contract.envelope.routing.EventRouting;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

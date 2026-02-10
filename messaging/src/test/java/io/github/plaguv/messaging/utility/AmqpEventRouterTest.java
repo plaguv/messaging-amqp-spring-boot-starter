@@ -1,7 +1,7 @@
 package io.github.plaguv.messaging.utility;
 
 import io.github.plaguv.contract.envelope.EventEnvelope;
-import io.github.plaguv.contract.envelope.payload.pos.StoreOpenedEvent;
+import io.github.plaguv.contract.event.pos.StoreOpenedEvent;
 import io.github.plaguv.contract.envelope.routing.EventScope;
 import io.github.plaguv.messaging.config.properties.AmqpProperties;
 import io.github.plaguv.messaging.utlity.AmqpEventRouter;

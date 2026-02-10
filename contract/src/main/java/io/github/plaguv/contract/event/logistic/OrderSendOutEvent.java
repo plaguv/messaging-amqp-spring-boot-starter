@@ -1,7 +1,7 @@
-package io.github.plaguv.contract.envelope.payload.logistic;
+package io.github.plaguv.contract.event.logistic;
 
-import io.github.plaguv.contract.envelope.payload.Event;
-import io.github.plaguv.contract.envelope.payload.EventDomain;
+import io.github.plaguv.contract.event.Event;
+import io.github.plaguv.contract.event.EventDomain;
 
 @Event(domain = EventDomain.LOGISTIC)
 public record OrderSendOutEvent(
