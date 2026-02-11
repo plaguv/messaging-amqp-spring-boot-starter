@@ -1,6 +1,4 @@
-package io.github.plaguv.contract.envelope.metadata;
-
-import jakarta.annotation.Nonnull;
+package io.github.plaguv.contract.event;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -64,14 +62,5 @@ public record EventVersion(
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Parameter 'version' has an invalid version format");
         }
-    }
-
-    @Override
-    public @Nonnull String toString() {
-        return "EventVersion{" +
-                "major=" + major +
-                ", minor=" + minor +
-                ", patch=" + patch +
-                '}';
     }
 }

@@ -1,79 +1,54 @@
 package io.github.plaguv.messaging.config.autoconfiguration;
 
-import io.github.plaguv.contract.envelope.EventEnvelope;
-import io.github.plaguv.contract.event.Event;
-import io.github.plaguv.contract.envelope.payload.EventPayload;
 import io.github.plaguv.messaging.config.properties.AmqpProperties;
-import io.github.plaguv.messaging.listener.AmqpListener;
+import io.github.plaguv.messaging.listener.discoverer.AmqpEventListenerDiscoverer;
+import io.github.plaguv.messaging.listener.discoverer.EventListenerDiscoverer;
+import io.github.plaguv.messaging.listener.topology.AmqpEventListenerTopology;
+import io.github.plaguv.messaging.listener.topology.EventListenerTopology;
+import io.github.plaguv.messaging.utlity.converter.EventEnvelopeToPayloadConverter;
 import io.github.plaguv.messaging.utlity.EventRouter;
 import org.springframework.amqp.core.*;
-import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
+import tools.jackson.databind.ObjectMapper;
 
-import java.lang.reflect.Method;
-import java.util.*;
-
-//TODO: better formating
 @AutoConfiguration(after = AmqpAutoConfiguration.class)
 public class AmqpEventListenerAutoConfiguration {
 
     public AmqpEventListenerAutoConfiguration() {}
 
     @Bean
-    public Declarables dynamicTopology(ListableBeanFactory beanFactory, EventRouter eventRouter, AmqpProperties props) {
+    @ConditionalOnMissingBean
+    public EventListenerDiscoverer eventListenerDiscoverer(ListableBeanFactory listableBeanFactory) {
+        return new AmqpEventListenerDiscoverer(listableBeanFactory);
+    }
 
-        List<Declarable> adminObjects = new ArrayList<>();
+    @Bean
+    @ConditionalOnMissingBean
+    public EventListenerTopology topologyDeclarer(AmqpProperties amqpProperties, EventRouter eventRouter) {
+        return new AmqpEventListenerTopology(amqpProperties, eventRouter);
+    }
 
-        Map<String, Exchange> exchanges = new HashMap<>();
-        Map<String, Queue> queues = new HashMap<>();
-        Set<Binding> bindings = new HashSet<>();
+    @Bean
+    @ConditionalOnMissingBean
+    public SimpleRabbitListenerContainerFactory simpleRabbitListenerContainerFactory(ConnectionFactory connectionFactory, ObjectMapper objectMapper) {
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        factory.setMessageConverter(new EventEnvelopeToPayloadConverter(objectMapper));
+        return factory;
+    }
 
-        String[] beanNames = beanFactory.getBeanNamesForType(Object.class);
-
-        for (String beanName : beanNames) {
-            Class<?> type = beanFactory.getType(beanName);
-            if (type == null) continue;
-
-            for (Method method : type.getDeclaredMethods()) {
-                if (!method.isAnnotationPresent(AmqpListener.class)) continue;
-
-                if (method.getParameterCount() != 1) continue;
-
-                Class<?> parameterType = method.getParameterTypes()[0];
-
-                if (!parameterType.isAnnotationPresent(Event.class)) continue;
-
-                EventEnvelope envelope = EventEnvelope.builder()
-                        .ofPayload(EventPayload.empty(parameterType))
-                        .build();
-
-
-                String exchangeName = eventRouter.resolveExchange(envelope);
-                String queueName = eventRouter.resolveQueue(envelope);
-                Set<String> bindingKeys = eventRouter.resolveBindingKey(envelope);
-
-                Exchange exchange = exchanges.computeIfAbsent(exchangeName, name ->
-                        new TopicExchange(name, props.declareExchangeDurable(), props.declareExchangeDeletable())
-                );
-
-                Queue queue = queues.computeIfAbsent(queueName, name ->
-                        new Queue(name, props.declareQueueDurable(), props.declareQueueExclusive(), props.declareQueueDeletable())
-                );
-
-                for (String key : bindingKeys) {
-                    bindings.add(BindingBuilder.bind(queue).to((TopicExchange) exchange).with(key));
-                }
-            }
-        }
-
-        adminObjects.addAll(exchanges.values());
-        adminObjects.addAll(queues.values());
-        adminObjects.addAll(bindings);
-
-        adminObjects.forEach(System.out::println);
-
-        return null;
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnBooleanProperty(prefix = "amqp.skip", name = "register-listeners", havingValue = false, matchIfMissing = true)
+    public Declarables declarables(EventListenerDiscoverer discoverer, EventListenerTopology eventListenerTopology) {
+        Declarables declarables = new Declarables();
+        eventListenerTopology.getDeclarablesFromListeners(discoverer.getListeners()).getDeclarables().forEach(System.out::println);
+        return declarables;
     }
 }

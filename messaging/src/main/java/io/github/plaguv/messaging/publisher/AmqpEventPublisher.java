@@ -38,6 +38,7 @@ public class AmqpEventPublisher implements EventPublisher {
                     eventRouter.resolveRoutingKey(eventEnvelope),
                     buildMessage(eventEnvelope)
             );
+            log.atInfo().log("Successfully send message");
         } catch (Exception e) {
             log.atError().log("Failed to send AMQP message", e);
         }
@@ -55,7 +56,7 @@ public class AmqpEventPublisher implements EventPublisher {
         // Optional Header Content
         props.setHeader(
                 "x-event-type",
-                ClassNameExtractor.extractUpperLower(eventEnvelope.payload().getClass())
+                ClassNameExtractor.extractUpperLower(eventEnvelope.payload().type())
         );
         props.setHeader(
                 "x-event-domain",
@@ -67,9 +68,9 @@ public class AmqpEventPublisher implements EventPublisher {
         );
         props.setHeader(
                 "x-producer",
-                eventEnvelope.metadata().producer().isPresent() ?
-                        ClassNameExtractor.extractUpperLower(eventEnvelope.metadata().producer().get()) :
-                        ClassNameExtractor.extractUpperLower(AopUtils.getTargetClass(this))
+                eventEnvelope.metadata().producer() != null ?
+                        ClassNameExtractor.extractUpperLower(eventEnvelope.metadata().producer()) :
+                        ClassNameExtractor.extractUpperLower(AopUtils.getTargetClass(this)) // TODO: this should be a configurable option
         );
         try {
             return new Message(

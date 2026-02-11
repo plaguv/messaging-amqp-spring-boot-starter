@@ -7,39 +7,22 @@ import org.junit.jupiter.api.Test;
 class EventRoutingTest {
 
     @Test
-    @DisplayName("Should throw if null parameter in constructor")
+    @DisplayName("Constructor should throw if null parameter in constructor")
     void throwsOnNull() {
         Assertions.assertThrows(IllegalArgumentException.class,
-                () -> new EventRouting(null));
+                () -> new EventRouting(null,  null));
         Assertions.assertThrows(IllegalArgumentException.class,
-                () -> new EventRouting(null, null));
+                () -> new EventRouting(EventScope.TARGET,  null));
         Assertions.assertThrows(IllegalArgumentException.class,
-                () -> EventRouting.valueOf(null));
+                () -> new EventRouting(EventScope.GROUP,  null));
         Assertions.assertThrows(IllegalArgumentException.class,
-                () -> EventRouting.valueOf(null, null));
+                () -> new EventRouting(null, "test"));
     }
 
     @Test
-    @DisplayName("Constructor should keep field values")
-    void constructorKeepsParameters() {
-        String wildcard = "topic";
-        EventScope eventScope = EventScope.BROADCAST;
-        EventRouting eventRouting;
-
-        eventRouting = new EventRouting(eventScope, wildcard);
-        Assertions.assertEquals(eventScope, eventRouting.eventScope());
-        Assertions.assertEquals(wildcard, eventRouting.eventWildcard());
-
-        eventRouting = new EventRouting(eventScope);
-        Assertions.assertEquals(eventScope, eventRouting.eventScope());
-        Assertions.assertNotEquals(wildcard, eventRouting.eventWildcard());
-
-        eventRouting = EventRouting.valueOf(eventScope, wildcard);
-        Assertions.assertEquals(eventScope, eventRouting.eventScope());
-        Assertions.assertEquals(wildcard, eventRouting.eventWildcard());
-
-        eventRouting = EventRouting.valueOf(eventScope);
-        Assertions.assertEquals(eventScope, eventRouting.eventScope());
-        Assertions.assertNotEquals(wildcard, eventRouting.eventWildcard());
+    @DisplayName("Constructor should allow null wildcard if and only if the scope is a broadcast")
+    void allowEmptyWildcardOnBroadcast() {
+        Assertions.assertDoesNotThrow(
+                () -> new EventRouting(EventScope.BROADCAST, null));
     }
 }

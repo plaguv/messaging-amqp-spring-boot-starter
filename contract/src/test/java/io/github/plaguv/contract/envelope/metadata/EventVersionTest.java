@@ -1,5 +1,6 @@
 package io.github.plaguv.contract.envelope.metadata;
 
+import io.github.plaguv.contract.event.EventVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,7 +40,7 @@ class EventVersionTest {
     }
 
     @Test
-    @DisplayName("Should return a correct EventVersion via the valueOf(int) method")
+    @DisplayName("Constructor should return a correct EventVersion in the valueOf(int) method")
     void valueOfIntParses() {
         eventVersion = EventVersion.valueOf(1);
         Assertions.assertEquals(1, eventVersion.major());
@@ -58,7 +59,7 @@ class EventVersionTest {
     }
 
     @Test
-    @DisplayName("Should throw an exception when an invalid format gets input")
+    @DisplayName("Constructor should throw an exception when an invalid string format gets input")
     void valueOfStringThrows() {
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> EventVersion.valueOf("a"));
@@ -81,7 +82,7 @@ class EventVersionTest {
     }
 
     @Test
-    @DisplayName("Should return a correct EventVersion via the valueOf(string) method")
+    @DisplayName("Constructor should return a correct EventVersion in the valueOf(string) method")
     void valueOfStringParses() {
         eventVersion = EventVersion.valueOf("1");
         Assertions.assertEquals(1, eventVersion.major());

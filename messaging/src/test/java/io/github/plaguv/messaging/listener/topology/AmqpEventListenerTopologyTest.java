@@ -1,9 +1,10 @@
-package io.github.plaguv.messaging.listener;
+package io.github.plaguv.messaging.listener.topology;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-class AmqpEventListenerRegistrarTest {
+// TODO: implement tests
+class AmqpEventListenerTopologyTest {
 
     @Test
     @DisplayName("test")

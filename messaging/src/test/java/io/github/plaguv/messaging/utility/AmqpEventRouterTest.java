@@ -1,6 +1,7 @@
 package io.github.plaguv.messaging.utility;
 
 import io.github.plaguv.contract.envelope.EventEnvelope;
+import io.github.plaguv.contract.envelope.payload.EventPayload;
 import io.github.plaguv.contract.event.pos.StoreOpenedEvent;
 import io.github.plaguv.contract.envelope.routing.EventScope;
 import io.github.plaguv.messaging.config.properties.AmqpProperties;
@@ -8,7 +9,6 @@ import io.github.plaguv.messaging.utlity.AmqpEventRouter;
 import io.github.plaguv.messaging.utlity.EventRouter;
 import org.junit.jupiter.api.*;
 
-import java.util.Arrays;
 import java.util.Set;
 
 class AmqpEventRouterTest {
@@ -20,24 +20,21 @@ class AmqpEventRouterTest {
 
     @BeforeEach
     void beforeEach() {
-        AmqpProperties amqpProperties = new AmqpProperties(
-                "central",
-                "starter",
-                null,
-                null,
-                null,
-                null,
-                null
-        );
-
         eventRouter = new AmqpEventRouter(
-                amqpProperties
-        );
+                new AmqpProperties(
+                        "central",
+                        "starter",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                ));
 
         storeOpenedEvent = new StoreOpenedEvent(5L);
 
-        eventEnvelope = EventEnvelope.builder()
-                .ofPayload(storeOpenedEvent)
+        eventEnvelope = EventEnvelope.builderWithDefaults()
+                .ofEventPayload(EventPayload.valueOf(storeOpenedEvent))
                 .build();
     }
 
@@ -62,29 +59,28 @@ class AmqpEventRouterTest {
     @Test
     @DisplayName("Should resolve the routing key based on the event envelope")
     void resolveRoutingKeyWith() {
-        eventEnvelope = EventEnvelope.builder()
-                .withEventScope(EventScope.BROADCAST)
-                .ofPayload(storeOpenedEvent)
+        eventEnvelope = EventEnvelope.builderWithDefaults()
+                .ofEventPayload(EventPayload.valueOf(storeOpenedEvent))
                 .build();
         Assertions.assertEquals(
                 "store.store_opened_event",
                 eventRouter.resolveRoutingKey(eventEnvelope)
         );
 
-        eventEnvelope = EventEnvelope.builder()
+        eventEnvelope = EventEnvelope.builderWithDefaults()
                 .withEventScope(EventScope.GROUP)
                 .withWildcard("cashier")
-                .ofPayload(storeOpenedEvent)
+                .ofEventPayload(EventPayload.valueOf(storeOpenedEvent))
                 .build();
         Assertions.assertEquals(
                 "store.store_opened_event.group.cashier",
                 eventRouter.resolveRoutingKey(eventEnvelope)
         );
 
-        eventEnvelope = EventEnvelope.builder()
+        eventEnvelope = EventEnvelope.builderWithDefaults()
                 .withEventScope(EventScope.TARGET)
                 .withWildcard("cashier")
-                .ofPayload(storeOpenedEvent)
+                .ofEventPayload(EventPayload.valueOf(storeOpenedEvent))
                 .build();
         Assertions.assertEquals(
                 "store.store_opened_event.target.cashier",
@@ -95,22 +91,22 @@ class AmqpEventRouterTest {
     @Test
     @DisplayName("Should resolve the binding keys based on the event envelope")
     void resolveBindingKey() {
-        eventEnvelope = EventEnvelope.builder()
-                .withWildcard("cashier")
-                .ofPayload(storeOpenedEvent)
+        eventEnvelope = EventEnvelope.builderWithDefaults()
+                .withWildcard("starter")
+                .ofEventPayload(EventPayload.valueOf(storeOpenedEvent))
                 .build();
 
         Set<String> expectedBindings = Set.of(
                 "store.store_opened_event",                 // Scope: Broadcast
-                "store.store_opened_event.group.cashier",   // Scope: Group
-                "store.store_opened_event.target.cashier"   // Scope: Target
+                "store.store_opened_event.group.starter",   // Scope: Group
+                "store.store_opened_event.target.starter"   // Scope: Target
         );
         Set<String> actualBindings = eventRouter.resolveBindingKey(eventEnvelope);
 
         Assertions.assertEquals(expectedBindings.size(), actualBindings.size());
         Assertions.assertArrayEquals(
-                Arrays.stream(expectedBindings.toArray()).sorted().toArray(),
-                Arrays.stream(actualBindings.toArray()).sorted().toArray()
+                expectedBindings.stream().sorted().toArray(),
+                actualBindings.stream().sorted().toArray()
         );
     }
 }

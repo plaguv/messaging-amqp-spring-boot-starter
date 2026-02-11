@@ -68,8 +68,8 @@ public class AmqpEventRouter implements EventRouter {
 
     private String createScopingSuffix(EventEnvelope eventEnvelope) {
         return createScopingSuffix(
-                eventEnvelope.routing().eventScope(),
-                eventEnvelope.routing().eventWildcard()
+                eventEnvelope.routing().scope(),
+                eventEnvelope.routing().wildcard()
         );
     }
 }

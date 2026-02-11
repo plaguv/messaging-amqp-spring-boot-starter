@@ -10,73 +10,52 @@ import java.util.UUID;
 
 class EventMetadataTest {
 
-    private UUID uuid;
-    private EventVersion eventVersion;
-    private Instant instant;
+    private UUID eventId;
+    private Instant occurredAt;
     private Class<?> producer;
 
 
     @BeforeEach
     void beforeEach() {
-        uuid = UUID.randomUUID();
-        eventVersion = EventVersion.valueOf(1);
-        instant = Instant.now();
+        eventId = UUID.randomUUID();
+        occurredAt = Instant.now();
         producer = EventMetadataTest.class;
     }
 
     @Test
-    @DisplayName("Should throw if null parameter is present in constructor")
+    @DisplayName("Constructor should throw if null parameter is present in constructor")
     void throwsOnNull() {
         Assertions.assertThrows(IllegalArgumentException.class,
-                () -> new EventMetadata(null, null, null, null));
+                () -> new EventMetadata(null, null, null));
         Assertions.assertThrows(IllegalArgumentException.class,
-                () -> new EventMetadata(uuid, eventVersion, instant, null));
+                () -> new EventMetadata(eventId, null, producer));
         Assertions.assertThrows(IllegalArgumentException.class,
-                () -> new EventMetadata(uuid, eventVersion, null, producer));
-        Assertions.assertThrows(IllegalArgumentException.class,
-                () -> new EventMetadata(uuid, null, instant, producer));
-        Assertions.assertThrows(IllegalArgumentException.class,
-                () -> new EventMetadata(null, eventVersion, instant, producer));
+                () -> new EventMetadata(null, occurredAt, producer));
     }
 
     @Test
-    @DisplayName("Should construct with defaults if parameters are omitted in constructor")
-    void constructsWithMinimalParameters() {
+    @DisplayName("Constructor should not throw on optional producer field")
+    void optionalProducer() {
         Assertions.assertDoesNotThrow(
-                () -> new EventMetadata(eventVersion, producer));
+                () -> new EventMetadata(eventId, occurredAt, null)
+        );
+
         Assertions.assertDoesNotThrow(
-                () -> new EventMetadata(producer));
+                EventMetadata::now);
     }
 
     @Test
-    @DisplayName("Constructor should keep field values")
-    void constructorKeepsParameters() {
-        EventMetadata eventMetadata;
+    @DisplayName("Constructor constructs unique event")
+    void constructorConstructsUniqueEvent() {
+        EventMetadata first = EventMetadata.now();
+        EventMetadata second = EventMetadata.now();
 
-        eventMetadata = new EventMetadata(uuid, eventVersion, instant, producer);
-        Assertions.assertEquals(uuid, eventMetadata.eventId());
-        Assertions.assertEquals(eventVersion, eventMetadata.eventVersion());
-        Assertions.assertEquals(instant, eventMetadata.occurredAt());
-        Assertions.assertEquals(producer, eventMetadata.producer());
-    }
+        Assertions.assertNotSame(first, second);
+        Assertions.assertNotEquals(first, second);
 
-    @Test
-    @DisplayName("Constructor should reevaluate fields, if omitted from call")
-    void constructorReevaluatesParametersIfOmitted() {
-        EventMetadata eventMetadata;
+        Assertions.assertNotSame(first.eventId(), second.eventId());
+        Assertions.assertNotEquals(first.eventId(), second.eventId());
 
-
-
-        eventMetadata = new EventMetadata(eventVersion, producer);
-        Assertions.assertNotEquals(uuid, eventMetadata.eventId());
-        Assertions.assertEquals(eventVersion, eventMetadata.eventVersion());
-//        Assertions.assertNotEquals(instant.hashCode(), eventMetadata.occurredAt());
-        Assertions.assertEquals(producer, eventMetadata.producer());
-
-        eventMetadata = new EventMetadata(producer);
-        Assertions.assertNotEquals(uuid, eventMetadata.eventId());
-        Assertions.assertEquals(eventVersion, eventMetadata.eventVersion());
-//        Assertions.assertNotEquals(instant.hashCode(), eventMetadata.occurredAt());
-        Assertions.assertEquals(producer, eventMetadata.producer());
+        Assertions.assertNotSame(first.occurredAt(), second.occurredAt());
     }
 }

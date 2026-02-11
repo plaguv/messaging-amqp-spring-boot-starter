@@ -2,11 +2,9 @@ package io.github.plaguv.messaging.utlity.helper;
 
 import jakarta.annotation.Nonnull;
 
-public final class ClassNameExtractor {
+public abstract class ClassNameExtractor {
 
     private static final String REGEX = "(?<!^)([A-Z])";
-
-    private ClassNameExtractor() {}
 
     /**
      * Extracts an upper-lower case differentiating class name and adds a separator
