@@ -47,10 +47,14 @@ public class AmqpEventListenerDiscoverer implements EventListenerDiscoverer {
                             AnnotatedElementUtils.findMergedAnnotation(method, AmqpListener.class)
             );
 
-            annotatedMethods.keySet().stream()
-                    .filter(this::isValidListenerMethod)
-                    .map(method -> new Listener(beanName, method, method.getParameters()[0]))
-                    .forEach(listeners::add);
+            if (!annotatedMethods.isEmpty()) {
+                Object beanInstance = beanFactory.getBean(beanName);
+
+                annotatedMethods.keySet().stream()
+                        .filter(this::isValidListenerMethod)
+                        .map(method -> new Listener(beanInstance, method, method.getParameters()[0]))
+                        .forEach(listeners::add);
+            }
         }
 
         return listeners;

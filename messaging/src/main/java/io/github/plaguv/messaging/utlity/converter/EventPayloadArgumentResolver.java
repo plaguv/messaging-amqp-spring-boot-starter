@@ -1,6 +1,6 @@
 package io.github.plaguv.messaging.utlity.converter;
 
-import io.github.plaguv.contract.envelope.EventEnvelope;
+import io.github.plaguv.contract.envelope.payload.EventPayload;
 import io.github.plaguv.contract.event.Event;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -26,14 +26,9 @@ public class EventPayloadArgumentResolver implements HandlerMethodArgumentResolv
     @Override
     public @Nullable Object resolveArgument(@NonNull MethodParameter parameter, @NonNull Message<?> message) throws MessageConversionException {
         try {
-            Object payload = message.getPayload();
-            if (payload instanceof EventEnvelope envelope) {
-                return objectMapper.convertValue(envelope.payload().content(), parameter.getParameterType());
-            } else {
-                throw new MessageConversionException("Expected EventEnvelope but got " + payload.getClass());
-            }
+                return objectMapper.readValue((byte[]) message.getPayload(), EventPayload.class);
         } catch (MessageConversionException e) {
-            throw new MessageConversionException("Could not convert payload to EventEnvelope", e);
+            throw new MessageConversionException("Could not convert payload to EventPayload", e);
         }
     }
 }

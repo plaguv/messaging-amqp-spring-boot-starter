@@ -1,9 +1,16 @@
 package io.github.plaguv.contract.envelope.payload;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.github.plaguv.contract.event.Event;
 
 public record EventPayload(
         Class<?> contentType,
+
+        @JsonTypeInfo(
+                use = JsonTypeInfo.Id.CLASS,
+                include = JsonTypeInfo.As.EXTERNAL_PROPERTY,
+                property = "contentType"
+        )
         Object content
 ) {
     public EventPayload {

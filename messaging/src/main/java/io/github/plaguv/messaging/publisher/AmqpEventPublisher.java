@@ -55,10 +55,6 @@ public class AmqpEventPublisher implements EventPublisher {
         props.setTimestamp(Date.from(eventEnvelope.metadata().occurredAt()));
         // Optional Header Content
         props.setHeader(
-                "x-event-contentType",
-                ClassNameExtractor.extractUpperLower(eventEnvelope.payload().contentType())
-        );
-        props.setHeader(
                 "x-event-domain",
                 eventEnvelope.payload().contentType().getAnnotation(Event.class).domain().name().toLowerCase()
         );
@@ -74,7 +70,7 @@ public class AmqpEventPublisher implements EventPublisher {
         );
         try {
             return new Message(
-                    objectMapper.writeValueAsBytes(eventEnvelope),
+                    objectMapper.writeValueAsBytes(eventEnvelope.payload()),
                     props // header
             );
         } catch (JacksonException jacksonException) {
