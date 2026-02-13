@@ -5,18 +5,18 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.1.0-M1</version>
+        <version>4.0.0</version>
     </parent>
 
     <groupId>io.github.plaguv</groupId>
     <artifactId>messaging-amqp-spring-boot-starter</artifactId>
-    <version>1.0.0-alpha-1</version>
+    <version>1.0.0</version>
     <packaging>pom</packaging>
 
     <name>Messaging AMQP Spring Boot Starter</name>
     <description>
-        A Module designed to serve as a messaging starter for Spring Boots AMQP.
-        The starter autoconfigures and sets up default beans related to AMQP messaging services.
+        A standardized, opinionated messaging template for RabbitMQ, designed
+        for internal event-driven communication in Spring Boot applications.
     </description>
     <url>https://github.com/plaguv/messaging-amqp-spring-boot-starter</url>
 

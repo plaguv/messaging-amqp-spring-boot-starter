@@ -1,6 +1,6 @@
 package io.github.plaguv.messaging.config.autoconfiguration;
 
-import io.github.plaguv.messaging.config.properties.AmqpProperties;
+import io.github.plaguv.messaging.config.properties.AmqpDeclarationProperties;
 import io.github.plaguv.messaging.listener.discoverer.AmqpEventListenerDiscoverer;
 import io.github.plaguv.messaging.listener.discoverer.EventListenerDiscoverer;
 import io.github.plaguv.messaging.listener.registrar.AmqpEventListenerRegistrar;
@@ -20,25 +20,25 @@ import org.springframework.messaging.handler.annotation.support.MessageHandlerMe
 public class AmqpEventListenerAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(EventListenerDiscoverer.class)
     public EventListenerDiscoverer eventListenerDiscoverer(ListableBeanFactory listableBeanFactory) {
         return new AmqpEventListenerDiscoverer(listableBeanFactory);
     }
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(EventListenerDiscoverer.class)
     public EventListenerRegistrar eventListenerRegistrar(MessageHandlerMethodFactory factory, EventListenerDiscoverer discoverer, EventRouter router) {
         return new AmqpEventListenerRegistrar(factory, discoverer, router);
     }
 
     @Bean
-    @ConditionalOnMissingBean
-    public EventListenerTopology topologyDeclarer(AmqpProperties amqpProperties, EventRouter eventRouter) {
-        return new AmqpEventListenerTopology(amqpProperties, eventRouter);
+    @ConditionalOnMissingBean(EventListenerTopology.class)
+    public EventListenerTopology topologyDeclarer(AmqpDeclarationProperties declarationProperties, EventRouter eventRouter) {
+        return new AmqpEventListenerTopology(declarationProperties, eventRouter);
     }
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(Declarables.class)
     @ConditionalOnBooleanProperty(prefix = "amqp.skip", name = "register-listeners", havingValue = false, matchIfMissing = true)
     public Declarables declarables(EventListenerDiscoverer discoverer, EventListenerTopology eventListenerTopology) {
         return eventListenerTopology.getDeclarablesFromListeners(discoverer.getListeners());

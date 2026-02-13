@@ -45,8 +45,8 @@ At minimum, each application must define its central exchange and central applic
 
 ````yaml
 amqp:
-  central_exchange: central
-  central_application: starter # or ${spring.application.name}
+  central-exchange: central
+  central-application: starter # or ${spring.application.name}
 ````
 
 These values are used to derive:
@@ -68,8 +68,8 @@ Automatically, ensuring consistent naming and topology across services.
 <dependencies>
     <dependency>
         <groupId>io.github.plaguv</groupId>
-        <artifactId>messaging-amqp-starter</artifactId>
-        <version>1.0.0-alpha-1</version>
+        <artifactId>messaging-amqp-spring-boot-starter</artifactId>
+        <version>1.0.0</version>
     </dependency>
 </dependencies>
 ````
@@ -78,7 +78,7 @@ Automatically, ensuring consistent naming and topology across services.
 
 ````gradle
 dependencies {
-    implementation 'io.github.plaguv:messaging-amqp-starter:1.0.0-alpha-1'
+    implementation 'io.github.plaguv:messaging-amqp-spring-boot-starter:1.0.0'
 }
 ````
 
@@ -109,10 +109,10 @@ Publishing an event is straightforward:
 
 ````java
 EventPayload payload = EventPayload.valueOf(
-        new StoreOpenedEvent(5L, Instant.now())
+        new StoreOpenedEvent(5L)
 );
 
-EventEnvelope envelope = EventEnvelope.builderWithDefaults()
+EventEnvelope envelope = EventEnvelopeBuilder.defaults()
         .ofEventPayload(payload)
         .built();
 

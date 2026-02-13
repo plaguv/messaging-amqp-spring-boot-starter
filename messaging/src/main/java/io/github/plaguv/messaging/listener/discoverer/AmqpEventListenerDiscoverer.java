@@ -20,22 +20,22 @@ public class AmqpEventListenerDiscoverer implements EventListenerDiscoverer {
 
     private static final Logger log = LoggerFactory.getLogger(AmqpEventListenerDiscoverer.class);
 
-    private final ListableBeanFactory beanFactory;
+    private final ListableBeanFactory factory;
 
-    public AmqpEventListenerDiscoverer(ListableBeanFactory beanFactory) {
-        this.beanFactory = beanFactory;
+    public AmqpEventListenerDiscoverer(ListableBeanFactory factory) {
+        this.factory = factory;
     }
 
     @Override
     public List<Listener> getListeners() {
         List<Listener> listeners = new ArrayList<>();
 
-        for (String beanName : beanFactory.getBeanDefinitionNames()) {
-            if (!beanFactory.containsBeanDefinition(beanName)) {
+        for (String beanName : factory.getBeanDefinitionNames()) {
+            if (!factory.containsBeanDefinition(beanName)) {
                 continue;
             }
 
-            Class<?> beanClass = beanFactory.getType(beanName);
+            Class<?> beanClass = factory.getType(beanName);
             if (beanClass == null) {
                 continue;
             }
@@ -48,7 +48,7 @@ public class AmqpEventListenerDiscoverer implements EventListenerDiscoverer {
             );
 
             if (!annotatedMethods.isEmpty()) {
-                Object beanInstance = beanFactory.getBean(beanName);
+                Object beanInstance = factory.getBean(beanName);
 
                 annotatedMethods.keySet().stream()
                         .filter(this::isValidListenerMethod)

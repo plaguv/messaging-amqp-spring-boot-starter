@@ -24,12 +24,7 @@ class AmqpEventRouterTest {
         eventRouter = new AmqpEventRouter(
                 new AmqpProperties(
                         "central",
-                        "starter",
-                        null,
-                        null,
-                        null,
-                        null,
-                        null
+                        "starter"
                 ));
 
         storeOpenedEvent = new StoreOpenedEvent(5L);

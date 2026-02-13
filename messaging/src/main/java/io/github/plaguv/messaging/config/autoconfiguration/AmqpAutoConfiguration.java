@@ -1,17 +1,20 @@
 package io.github.plaguv.messaging.config.autoconfiguration;
 
+import io.github.plaguv.messaging.config.properties.AmqpDeclarationProperties;
 import io.github.plaguv.messaging.config.properties.AmqpProperties;
 import io.github.plaguv.messaging.config.properties.AmqpStartupProperties;
 import io.github.plaguv.messaging.utlity.AmqpEventRouter;
 import io.github.plaguv.messaging.utlity.EventRouter;
-import io.github.plaguv.messaging.utlity.converter.EventEnvelopeAmqpConverter;
+import io.github.plaguv.messaging.utlity.converter.EventPayloadByteConverter;
 import io.github.plaguv.messaging.utlity.converter.EventPayloadArgumentResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AcknowledgeMode;
-import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.config.RetryInterceptorBuilder;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.boot.amqp.autoconfigure.RabbitAutoConfiguration;
+import org.springframework.boot.amqp.autoconfigure.RabbitTemplateCustomizer;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -26,12 +29,17 @@ import tools.jackson.databind.jsontype.PolymorphicTypeValidator;
 import java.util.List;
 
 @AutoConfiguration(after = RabbitAutoConfiguration.class)
-@EnableConfigurationProperties({AmqpProperties.class, AmqpStartupProperties.class})
-@EnableRabbit
+@EnableConfigurationProperties({
+        AmqpProperties.class,
+        AmqpDeclarationProperties.class,
+        AmqpStartupProperties.class
+})
 public class AmqpAutoConfiguration {
 
+    private static final Logger log = LoggerFactory.getLogger(AmqpAutoConfiguration.class);
+
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(ObjectMapper.class)
     public ObjectMapper objectMapper() {
         PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
                 .allowIfSubType("io.github.plaguv")
@@ -43,17 +51,30 @@ public class AmqpAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(EventRouter.class)
     public EventRouter eventRouter(AmqpProperties amqpProperties) {
         return new AmqpEventRouter(amqpProperties);
     }
 
     @Bean
-    @ConditionalOnMissingBean(name = "rabbitListenerContainerFactory")
-    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory, ObjectMapper objectMapper) {
+    public RabbitTemplateCustomizer amqpEventTemplateCustomizer() {
+        return rabbitTemplate -> {
+            rabbitTemplate.setMandatory(true);
+            rabbitTemplate.setReturnsCallback(returned ->
+                    log.atError().log(
+                            "Unroutable message. exchange={}, routingKey={}",
+                            returned.getExchange(),
+                            returned.getRoutingKey()
+                    )
+            );
+        };
+    }
+
+    @Bean
+    public SimpleRabbitListenerContainerFactory amqpEventListenerContainerFactory(ConnectionFactory connectionFactory, ObjectMapper objectMapper) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
 
-        factory.setMessageConverter(new EventEnvelopeAmqpConverter(objectMapper));
+        factory.setMessageConverter(new EventPayloadByteConverter(objectMapper));
         factory.setConnectionFactory(connectionFactory);
         factory.setAcknowledgeMode(AcknowledgeMode.AUTO);
         factory.setChannelTransacted(false);
@@ -66,12 +87,11 @@ public class AmqpAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean
-    public MessageHandlerMethodFactory messageHandlerMethodFactory(ObjectMapper objectMapper) {
+    public MessageHandlerMethodFactory amqpMessageHandlerMethodFactory() {
         DefaultMessageHandlerMethodFactory factory = new DefaultMessageHandlerMethodFactory();
 
         factory.setCustomArgumentResolvers(List.of(
-                new EventPayloadArgumentResolver(objectMapper)
+                new EventPayloadArgumentResolver()
         ));
         factory.afterPropertiesSet();
 

@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 
 class EventPayloadTest {
 
-
     private Class<?> payloadType;
     private Object payload;
 
@@ -24,27 +23,43 @@ class EventPayloadTest {
     void throwsOnNull() {
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> new EventPayload(null, null));
-        Assertions.assertThrows(IllegalArgumentException.class,
-                () -> new EventPayload(null, payload));
 
         Assertions.assertThrows(IllegalArgumentException.class,
+                () -> new EventPayload((Object) null));
+        Assertions.assertThrows(IllegalArgumentException.class,
                 () -> EventPayload.empty(null));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> new EventPayload(null));
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> EventPayload.valueOf(null));
     }
 
     @Test
-    @DisplayName("Constructor accepts empty payloads that at least have a contentType specified")
+    @DisplayName("Constructor accepts payloads with no type specified")
+    void constructorInfersContentTypeFromPayload() {
+        Assertions.assertDoesNotThrow(
+                () -> new EventPayload(null, payload));
+        Assertions.assertDoesNotThrow(
+                () -> new EventPayload(payload));
+        Assertions.assertDoesNotThrow(
+                () -> EventPayload.valueOf(payload));
+    }
+
+
+    @Test
+    @DisplayName("Constructor accepts empty payloads, that specify a type")
     void constructorAcceptsEmptyPayloads() {
         Assertions.assertDoesNotThrow(
                 () -> new EventPayload(payloadType, null));
+        Assertions.assertDoesNotThrow(
+                () -> new EventPayload(payloadType));
         Assertions.assertDoesNotThrow(
                 () -> EventPayload.empty(payloadType));
     }
 
     @Test
     @DisplayName("Constructor should only accept classes that implement @Event")
-    void acceptsOnlyEvents() {
+    void constructorAcceptsOnlyEventContent() {
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> EventPayload.empty(Object.class));
         Assertions.assertDoesNotThrow(
@@ -58,7 +73,7 @@ class EventPayloadTest {
 
     @Test
     @DisplayName("Constructor should only accept parameters that point towards the same event (contentType/content)")
-    void acceptsOnlyMatchingEvents() {
+    void constructorAcceptsOnlyMatchingEventContent() {
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> new EventPayload(StoreClosedEvent.class, payload));
 

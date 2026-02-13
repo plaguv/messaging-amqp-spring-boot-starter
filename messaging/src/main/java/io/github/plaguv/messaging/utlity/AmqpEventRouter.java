@@ -10,7 +10,6 @@ import jakarta.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.Set;
 
-//TODO: better formating
 public class AmqpEventRouter implements EventRouter {
 
     private final AmqpProperties amqpProperties;

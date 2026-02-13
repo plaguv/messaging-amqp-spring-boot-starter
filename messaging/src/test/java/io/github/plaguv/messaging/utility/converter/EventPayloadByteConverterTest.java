@@ -4,7 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 // TODO: implement tests
-class EventEnvelopeAmqpConverterTest {
+class EventPayloadByteConverterTest {
 
     @Test
     @DisplayName("test")

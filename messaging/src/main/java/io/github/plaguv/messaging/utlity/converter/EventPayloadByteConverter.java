@@ -8,11 +8,11 @@ import org.springframework.amqp.support.converter.MessageConversionException;
 import org.springframework.amqp.support.converter.MessageConverter;
 import tools.jackson.databind.ObjectMapper;
 
-public class EventEnvelopeAmqpConverter implements MessageConverter {
+public class EventPayloadByteConverter implements MessageConverter {
 
     private final ObjectMapper objectMapper;
 
-    public EventEnvelopeAmqpConverter(ObjectMapper objectMapper) {
+    public EventPayloadByteConverter(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 

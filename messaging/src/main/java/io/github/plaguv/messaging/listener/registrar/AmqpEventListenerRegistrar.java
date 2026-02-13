@@ -7,6 +7,8 @@ import io.github.plaguv.messaging.listener.discoverer.EventListenerDiscoverer;
 import io.github.plaguv.messaging.utlity.EventRouter;
 import io.github.plaguv.messaging.utlity.helper.Listener;
 import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListenerConfigurer;
 import org.springframework.amqp.rabbit.listener.MethodRabbitListenerEndpoint;
 import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistrar;
@@ -17,11 +19,17 @@ import java.lang.reflect.Parameter;
 
 public class AmqpEventListenerRegistrar implements EventListenerRegistrar, RabbitListenerConfigurer {
 
+    private static final Logger log = LoggerFactory.getLogger(AmqpEventListenerRegistrar.class);
+
     private final MessageHandlerMethodFactory factory;
     private final EventListenerDiscoverer discoverer;
     private final EventRouter router;
 
-    public AmqpEventListenerRegistrar(MessageHandlerMethodFactory factory, EventListenerDiscoverer discoverer, EventRouter router) {
+    public AmqpEventListenerRegistrar(
+            MessageHandlerMethodFactory factory,
+            EventListenerDiscoverer discoverer,
+            EventRouter router
+    ) {
         this.factory = factory;
         this.discoverer = discoverer;
         this.router = router;
@@ -33,7 +41,6 @@ public class AmqpEventListenerRegistrar implements EventListenerRegistrar, Rabbi
         registrar.setContainerFactoryBeanName("rabbitListenerContainerFactory");
 
         for (Listener listener : discoverer.getListeners()) {
-            System.out.println("Registering listener: " + listener.getClass().getSimpleName());
             registerListener(listener, registrar);
         }
     }
@@ -57,5 +64,6 @@ public class AmqpEventListenerRegistrar implements EventListenerRegistrar, Rabbi
         endpoint.setId("%s#%s".formatted(bean.getClass().getName(), method.getName()));
 
         registrar.registerEndpoint(endpoint);
+        log.atDebug().log("Registered listener '{}' with endpoint '{}'", listener, endpoint);
     }
 }
