@@ -2,7 +2,7 @@
 ![Spring](https://img.shields.io/badge/spring-%236DB33F.svg?style=for-the-badge&logo=spring&logoColor=white)
 ![RabbitMQ](https://img.shields.io/badge/Rabbitmq-FF6600?style=for-the-badge&logo=rabbitmq&logoColor=white)
 
-## 📦 Messaging AMQP Spring Boot Starter
+## 📦 Plaguv AMQP Spring Boot Starter
 
 A standardized, opinionated messaging framework for RabbitMQ, designed for internal event-driven communication in Spring Boot applications.
 
